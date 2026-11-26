@@ -50,9 +50,18 @@ function showLogin() {
         method: 'POST',
         body: JSON.stringify({ action: 'login', authData: user })
       });
-      const data = await resp.json();
+      const text = await resp.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        alert('Ответ не JSON:\n' + text.substring(0, 500));
+        return;
+      }
+
       if (!data.ok) {
-        alert(data.error || 'Ошибка входа');
+        // Показываем ВСЁ, что вернул сервер
+        alert('Ответ сервера:\n' + JSON.stringify(data, null, 2));
         return;
       }
       currentUserId = data.userId;
@@ -91,7 +100,6 @@ function render() {
     <div style="padding:20px;text-align:center;">
       <p>Авторизация успешна. ID: ${currentUserId}</p>
       <p>Загружено записей: ${allPeople.length}</p>
-      <p style="color:#888;font-size:12px;">Полный интерфейс будет добавлен на следующем шаге.</p>
     </div>
   `;
 }
