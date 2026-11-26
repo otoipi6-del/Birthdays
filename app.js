@@ -1,10 +1,11 @@
 // ====== НАСТРОЙКИ ======
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwdahigdXXE8kfyvRcyStG4nBb2WbP37ST94JxvRHjPMdkYUSditZ_bWFimsAkjFbJapg/exec';
-const TEST_USER_ID = '6645520930'; // Жёстко зашитый ID для тестов
+const TEST_USER_ID = '6645520930';
 // =======================
 
 let allPeople = [];
-let currentUserId = TEST_USER_ID; // Пока используем тестовый ID
+let currentUserId = TEST_USER_ID;
+let currentView = 'main'; // 'main' или 'person'
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -28,91 +29,130 @@ async function loadBirthdays() {
     if (!data.ok) throw new Error(data.error || 'Ошибка доступа');
 
     allPeople = data.people || [];
-    render();
+    renderMain();
   } catch (e) {
     app.innerHTML = '<div class="error">' + e.message + '</div>';
   }
 }
 
-// ====== ОТРИСОВКА ======
-function render() {
+// ====== ГЛАВНЫЙ ЭКРАН ======
+function renderMain() {
+  currentView = 'main';
   const app = document.getElementById('app');
-  app.innerHTML = `
-    <section id="todayCard" class="card-section"></section>
-    <section id="weekCard" class="card-section hidden"></section>
-    <section id="monthCard" class="card-section hidden"></section>
-    <section id="allMonths" class="months-container"></section>
-  `;
-  renderToday();
-  renderAllMonths();
-}
-
-// ====== КАРТОЧКА 1: СЕГОДНЯ ======
-function renderToday() {
   const today = new Date();
   const todayMonth = today.getMonth() + 1;
   const todayDay = today.getDate();
 
+  // Ищем именинников сегодня
   const todayPeople = allPeople.filter(p => {
     const d = parseDate(p.birthDate);
     return d.month === todayMonth && d.day === todayDay;
   });
 
-  const container = document.getElementById('todayCard');
+  // Ищем на неделе (если сегодня пусто)
+  const weekPeople = todayPeople.length === 0 ? getThisWeekPeople(today) : [];
+
+  let topHtml = '';
 
   if (todayPeople.length > 0) {
-    container.innerHTML = todayPeople.map(p => {
-      const birthYear = parseDate(p.birthDate).year;
-      const age = today.getFullYear() - birthYear;
-      const greeting = generateGreeting(p);
-      const tgUser = p.telegramUsername ? p.telegramUsername.replace('@', '') : '';
-      const tgLink = tgUser ? `https://t.me/${tgUser}` : '#';
-
-      return `
-        <div class="today-card">
-          <div class="name">${escapeHtml(p.fullName)}</div>
-          <div class="age">${age} <span class="age-label">лет</span></div>
-          <a href="${tgLink}" target="_blank" class="greet-btn">
-            ✈️ Поздравить в Telegram
-          </a>
-          <div class="greeting-text">${escapeHtml(greeting)}</div>
+    // Карточка "Сегодня"
+    const dateStr = formatDate(today);
+    topHtml = `
+      <div class="today-card">
+        <div class="today-date">${dateStr}</div>
+        <div class="today-list">
+          ${todayPeople.map(p => `
+            <div class="today-person" onclick="showPerson('${escapeHtml(p.fullName)}')">
+              <span class="person-name">${escapeHtml(p.fullName)}</span>
+              <span class="person-age">${today.getFullYear() - parseDate(p.birthDate).year} лет</span>
+            </div>
+          `).join('')}
         </div>
-      `;
-    }).join('');
-    return;
-  }
-
-  // Нет именинников сегодня — проверяем неделю
-  const weekPeople = getThisWeekPeople(today);
-  if (weekPeople.length > 0) {
-    container.innerHTML = '';
-    const weekEl = document.getElementById('weekCard');
-    weekEl.classList.remove('hidden');
-    weekEl.innerHTML = `
-      <div class="section-title">На этой неделе</div>
-      ${weekPeople.map(p => renderPersonRow(p, false)).join('')}
+      </div>
     `;
-    return;
-  }
-
-  // Нет на неделе — показываем месяц
-  const monthPeople = getAllMonthPeople(todayMonth);
-  if (monthPeople.length > 0) {
-    container.innerHTML = '';
-    const monthEl = document.getElementById('monthCard');
-    monthEl.classList.remove('hidden');
-    monthEl.innerHTML = `
-      <div class="section-title">В этом месяце</div>
-      ${monthPeople.map(p => {
-        const d = parseDate(p.birthDate);
-        const isPast = d.day < todayDay;
-        return renderPersonRow(p, isPast);
-      }).join('')}
+  } else if (weekPeople.length > 0) {
+    // Карточка "На этой неделе"
+    topHtml = `
+      <div class="week-card">
+        <div class="section-title">На этой неделе</div>
+        ${weekPeople.map(p => {
+          const d = parseDate(p.birthDate);
+          const monthNames = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+          return `
+            <div class="person-row" onclick="showPerson('${escapeHtml(p.fullName)}')">
+              <span class="person-name">${escapeHtml(p.fullName)}</span>
+              <span class="person-date">${d.day} ${monthNames[d.month-1]}</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
     `;
   } else {
-    container.innerHTML = '<div class="loading">Нет дней рождения в этом месяце</div>';
+    // Карточка "В этом месяце"
+    const monthPeople = getAllMonthPeople(todayMonth);
+    if (monthPeople.length > 0) {
+      topHtml = `
+        <div class="month-card-top">
+          <div class="section-title">В этом месяце</div>
+          ${monthPeople.map(p => {
+            const d = parseDate(p.birthDate);
+            const isPast = d.day < todayDay;
+            return `
+              <div class="person-row ${isPast ? 'past' : ''}" onclick="showPerson('${escapeHtml(p.fullName)}')">
+                <span class="person-name">${escapeHtml(p.fullName)}</span>
+                <span class="person-date">${d.day} ${getMonthShort(todayMonth)}</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    } else {
+      topHtml = '<div class="loading">Нет дней рождения в этом месяце</div>';
+    }
   }
+
+  app.innerHTML = `
+    ${topHtml}
+    <section id="allMonths" class="months-container"></section>
+  `;
+  renderAllMonths();
 }
+
+// ====== ПОДРОБНАЯ КАРТОЧКА ИМЕНИННИКА ======
+window.showPerson = function(fullName) {
+  const person = allPeople.find(p => p.fullName === fullName);
+  if (!person) return;
+
+  currentView = 'person';
+  const app = document.getElementById('app');
+  const today = new Date();
+  const birthYear = parseDate(person.birthDate).year;
+  const age = today.getFullYear() - birthYear;
+  const greeting = generateGreeting(person);
+  const tgUser = person.telegramUsername ? person.telegramUsername.replace('@', '') : '';
+  const tgLink = tgUser ? `https://t.me/${tgUser}` : '#';
+
+  app.innerHTML = `
+    <div style="padding: 10px 0;">
+      <button onclick="renderMain()" class="back-btn">← Назад</button>
+    </div>
+    <div class="today-card person-detail-card">
+      <div class="name">${escapeHtml(person.fullName)}</div>
+      <div class="age">${age} <span class="age-label">лет</span></div>
+      <div class="birth-date">Дата рождения: ${formatDate(new Date(person.birthDate))}</div>
+      
+      <a href="${tgLink}" target="_blank" class="greet-btn">
+        ✈️ Написать в Telegram
+      </a>
+      
+      <div class="greeting-box">
+        <div class="greeting-title">Поздравление:</div>
+        <div class="greeting-text">${escapeHtml(greeting)}</div>
+      </div>
+    </div>
+    <section id="allMonths" class="months-container hidden"></section>
+  `;
+};
 
 // ====== ВСЕ 12 МЕСЯЦЕВ ======
 function renderAllMonths() {
@@ -123,6 +163,8 @@ function renderAllMonths() {
   const curDay = now.getDate();
 
   const container = document.getElementById('allMonths');
+  if (!container) return;
+
   container.innerHTML = monthNames.map((name, idx) => {
     const m = idx + 1;
     const people = getAllMonthPeople(m);
@@ -132,7 +174,7 @@ function renderAllMonths() {
       const d = parseDate(p.birthDate);
       const isPast = m < curMonth || (m === curMonth && d.day < curDay);
       return `
-        <div class="month-person ${isPast ? 'past' : ''}">
+        <div class="month-person ${isPast ? 'past' : ''}" onclick="showPerson('${escapeHtml(p.fullName)}')">
           <span class="day">${d.day}</span>
           <span>${escapeHtml(p.fullName)}</span>
         </div>
@@ -148,7 +190,18 @@ function renderAllMonths() {
   }).join('');
 }
 
-// ====== ВСПОМОГАТЕЛЬНЫЕ ======
+// ====== УТИЛИТЫ ======
+function formatDate(date) {
+  const months = ['января','февраля','марта','апреля','мая','июня',
+                  'июля','августа','сентября','октября','ноября','декабря'];
+  return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function getMonthShort(monthNum) {
+  const months = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  return months[monthNum - 1];
+}
+
 function parseDate(str) {
   if (str.includes('-')) {
     const [y, m, d] = str.split('-').map(Number);
@@ -165,7 +218,7 @@ function getAllMonthPeople(month) {
 }
 
 function getThisWeekPeople(today) {
-  const dayOfWeek = today.getDay(); // 0=Вс
+  const dayOfWeek = today.getDay();
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
   const monday = new Date(today);
   monday.setDate(today.getDate() + mondayOffset);
@@ -180,18 +233,6 @@ function getThisWeekPeople(today) {
   });
 }
 
-function renderPersonRow(p, isPast) {
-  const d = parseDate(p.birthDate);
-  const monthNames = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
-  return `
-    <div class="person-row ${isPast ? 'past' : ''}">
-      <span class="person-name">${escapeHtml(p.fullName)}</span>
-      <span class="person-date">${d.day} ${monthNames[d.month-1]}</span>
-    </div>
-  `;
-}
-
-// ====== ГЕНЕРАЦИЯ ПОЗДРАВЛЕНИЙ (без ИИ) ======
 const GREETING_TEMPLATES = [
   '{name}, с днём рождения! Пусть каждый день приносит что-то хорошее.',
   'Поздравляю, {name}! Желаю здоровья, сил и людей рядом, на которых можно положиться.',
@@ -221,7 +262,6 @@ function generateGreeting(person) {
   return pick.t.replace('{name}', firstName);
 }
 
-// ====== ТЕМА ======
 function initTheme() {
   const saved = localStorage.getItem('theme');
   if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
@@ -240,7 +280,6 @@ function updateThemeIcon() {
   document.querySelector('.theme-icon').textContent = isDark ? '☀️' : '🌙';
 }
 
-// ====== УТИЛИТЫ ======
 function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
