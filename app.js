@@ -50,11 +50,11 @@ function renderMain() {
 
   let topHtml = '';
 
+  // Карточка "Сегодня"
   if (todayPeople.length > 0) {
-    const dateStr = formatDate(today);
     topHtml += `
       <div class="today-card">
-        <div class="today-date">${dateStr}</div>
+        <div class="today-date">${formatDate(today)}</div>
         <div class="today-list">
           ${todayPeople.map(p => `
             <div class="today-person" onclick="showPerson('${escapeHtml(p.fullName)}')">
@@ -67,6 +67,7 @@ function renderMain() {
     `;
   }
 
+  // Карточка "На этой неделе"
   if (weekPeople.length > 0) {
     topHtml += `
       <div class="week-card">
@@ -92,7 +93,7 @@ function renderMain() {
   renderAllMonths();
 }
 
-// ====== ПОДРОБНАЯ КАРТОЧКА ИМЕНИННИКА ======
+// ====== ПОДРОБНАЯ КАРТОЧКА ======
 window.showPerson = function(fullName) {
   const person = allPeople.find(p => p.fullName === fullName);
   if (!person) return;
@@ -126,22 +127,29 @@ window.showPerson = function(fullName) {
   `;
 };
 
-// ====== ВСЕ 12 МЕСЯЦЕВ (ВСЕГДА) ======
+// ====== ВСЕ 12 МЕСЯЦЕВ (С ТЕКУЩЕГО) ======
 function renderAllMonths() {
   const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь',
                       'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
   const now = new Date();
-  const curMonth = now.getMonth() + 1;
+  const curMonth = now.getMonth() + 1; // 1-12
   const curDay = now.getDate();
 
   const container = document.getElementById('allMonths');
   if (!container) return;
 
-  container.innerHTML = monthNames.map((name, idx) => {
-    const m = idx + 1;
+  // Формируем порядок: текущий месяц, затем следующие по кругу
+  const order = [];
+  for (let i = 0; i < 12; i++) {
+    let m = curMonth + i;
+    if (m > 12) m -= 12;
+    order.push(m);
+  }
+
+  container.innerHTML = order.map(m => {
+    const name = monthNames[m - 1];
     const people = getAllMonthPeople(m);
     
-    // Формируем строки. Если людей нет — показываем пустоту или сообщение
     let rows = '';
     if (people.length === 0) {
       rows = `<div class="month-person empty-month">Нет именинников</div>`;
@@ -149,10 +157,11 @@ function renderAllMonths() {
       rows = people.map(p => {
         const d = parseDate(p.birthDate);
         const isPast = m < curMonth || (m === curMonth && d.day < curDay);
+        const dateLabel = isPast ? `${d.day} ${getMonthShort(m)} (прошёл)` : `${d.day} ${getMonthShort(m)}`;
         return `
           <div class="month-person ${isPast ? 'past' : ''}" onclick="showPerson('${escapeHtml(p.fullName)}')">
-            <span class="day">${d.day}</span>
-            <span>${escapeHtml(p.fullName)}</span>
+            <span class="month-person-name">${escapeHtml(p.fullName)}</span>
+            <span class="month-person-date">${dateLabel}</span>
           </div>
         `;
       }).join('');
@@ -172,6 +181,11 @@ function formatDate(date) {
   const months = ['января','февраля','марта','апреля','мая','июня',
                   'июля','августа','сентября','октября','ноября','декабря'];
   return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function getMonthShort(monthNum) {
+  const months = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  return months[monthNum - 1];
 }
 
 function parseDate(str) {
