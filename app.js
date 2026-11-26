@@ -53,13 +53,16 @@ function showLogin() {
       });
       
       const data = await resp.json();
-      if (!data.ok) {
-        alert('Сервер: ' + (data.error || 'Ошибка'));
-        return;
+      
+      // Показываем ВЕСЬ ответ сервера
+      alert('Полный ответ сервера:\n' + JSON.stringify(data, null, 2));
+      
+      // Если это не отладка, а реальный успех — продолжаем
+      if (data.ok) {
+        currentUserId = data.userId;
+        localStorage.setItem('tg_user_id', data.userId);
+        loadBirthdays();
       }
-      currentUserId = data.userId;
-      localStorage.setItem('tg_user_id', data.userId);
-      loadBirthdays();
     } catch (e) {
       alert('Ошибка соединения: ' + e.message);
     }
