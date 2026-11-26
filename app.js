@@ -6,11 +6,31 @@ const TEST_USER_ID = '6645520930';
 let allPeople = [];
 let currentUserId = TEST_USER_ID;
 
-document.addEventListener('DOMContentLoaded', init);
-
-function init() {
+document.addEventListener('DOMContentLoaded', () => {
   initTheme();
+  initBackToTop(); // Добавляем кнопку "Наверх"
   loadBirthdays();
+});
+
+// ====== КНОПКА "НАВЕРХ" ======
+function initBackToTop() {
+  const btn = document.createElement('button');
+  btn.id = 'backToTopBtn';
+  btn.innerHTML = '↑';
+  btn.title = 'Наверх';
+  document.body.appendChild(btn);
+
+  btn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 300) {
+      btn.classList.add('show');
+    } else {
+      btn.classList.remove('show');
+    }
+  });
 }
 
 // ====== ЗАГРУЗКА ДАННЫХ ======
@@ -50,11 +70,11 @@ function renderMain() {
 
   let topHtml = '';
 
-  // Карточка "Сегодня"
   if (todayPeople.length > 0) {
+    const dateStr = formatDate(today);
     topHtml += `
       <div class="today-card">
-        <div class="today-date">${formatDate(today)}</div>
+        <div class="today-date">${dateStr}</div>
         <div class="today-list">
           ${todayPeople.map(p => `
             <div class="today-person" onclick="showPerson('${escapeHtml(p.fullName)}')">
@@ -67,7 +87,6 @@ function renderMain() {
     `;
   }
 
-  // Карточка "На этой неделе"
   if (weekPeople.length > 0) {
     topHtml += `
       <div class="week-card">
@@ -127,18 +146,17 @@ window.showPerson = function(fullName) {
   `;
 };
 
-// ====== ВСЕ 12 МЕСЯЦЕВ (С ТЕКУЩЕГО) ======
+// ====== ВСЕ 12 МЕСЯЦЕВ ======
 function renderAllMonths() {
   const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь',
                       'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
   const now = new Date();
-  const curMonth = now.getMonth() + 1; // 1-12
+  const curMonth = now.getMonth() + 1;
   const curDay = now.getDate();
 
   const container = document.getElementById('allMonths');
   if (!container) return;
 
-  // Формируем порядок: текущий месяц, затем следующие по кругу
   const order = [];
   for (let i = 0; i < 12; i++) {
     let m = curMonth + i;
@@ -157,7 +175,7 @@ function renderAllMonths() {
       rows = people.map(p => {
         const d = parseDate(p.birthDate);
         const isPast = m < curMonth || (m === curMonth && d.day < curDay);
-        const dateLabel = isPast ? `${d.day} ${getMonthShort(m)} (прошёл)` : `${d.day} ${getMonthShort(m)}`;
+        const dateLabel = `${d.day} ${getMonthShort(m)}`;
         return `
           <div class="month-person ${isPast ? 'past' : ''}" onclick="showPerson('${escapeHtml(p.fullName)}')">
             <span class="month-person-name">${escapeHtml(p.fullName)}</span>
