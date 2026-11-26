@@ -5,7 +5,6 @@ const TEST_USER_ID = '6645520930';
 
 let allPeople = [];
 let currentUserId = TEST_USER_ID;
-let currentView = 'main'; // 'main' или 'person'
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -37,7 +36,6 @@ async function loadBirthdays() {
 
 // ====== ГЛАВНЫЙ ЭКРАН ======
 function renderMain() {
-  currentView = 'main';
   const app = document.getElementById('app');
   const today = new Date();
   const todayMonth = today.getMonth() + 1;
@@ -49,15 +47,15 @@ function renderMain() {
     return d.month === todayMonth && d.day === todayDay;
   });
 
-  // Ищем на неделе (если сегодня пусто)
-  const weekPeople = todayPeople.length === 0 ? getThisWeekPeople(today) : [];
+  // Ищем на неделе
+  const weekPeople = getThisWeekPeople(today);
 
   let topHtml = '';
 
+  // 1. Карточка "Сегодня" (если есть)
   if (todayPeople.length > 0) {
-    // Карточка "Сегодня"
     const dateStr = formatDate(today);
-    topHtml = `
+    topHtml += `
       <div class="today-card">
         <div class="today-date">${dateStr}</div>
         <div class="today-list">
@@ -70,9 +68,11 @@ function renderMain() {
         </div>
       </div>
     `;
-  } else if (weekPeople.length > 0) {
-    // Карточка "На этой неделе"
-    topHtml = `
+  }
+
+  // 2. Карточка "На этой неделе" (если есть)
+  if (weekPeople.length > 0) {
+    topHtml += `
       <div class="week-card">
         <div class="section-title">На этой неделе</div>
         ${weekPeople.map(p => {
@@ -87,30 +87,9 @@ function renderMain() {
         }).join('')}
       </div>
     `;
-  } else {
-    // Карточка "В этом месяце"
-    const monthPeople = getAllMonthPeople(todayMonth);
-    if (monthPeople.length > 0) {
-      topHtml = `
-        <div class="month-card-top">
-          <div class="section-title">В этом месяце</div>
-          ${monthPeople.map(p => {
-            const d = parseDate(p.birthDate);
-            const isPast = d.day < todayDay;
-            return `
-              <div class="person-row ${isPast ? 'past' : ''}" onclick="showPerson('${escapeHtml(p.fullName)}')">
-                <span class="person-name">${escapeHtml(p.fullName)}</span>
-                <span class="person-date">${d.day} ${getMonthShort(todayMonth)}</span>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      `;
-    } else {
-      topHtml = '<div class="loading">Нет дней рождения в этом месяце</div>';
-    }
   }
 
+  // 3. Все 12 месяцев (всегда)
   app.innerHTML = `
     ${topHtml}
     <section id="allMonths" class="months-container"></section>
@@ -123,7 +102,6 @@ window.showPerson = function(fullName) {
   const person = allPeople.find(p => p.fullName === fullName);
   if (!person) return;
 
-  currentView = 'person';
   const app = document.getElementById('app');
   const today = new Date();
   const birthYear = parseDate(person.birthDate).year;
@@ -150,7 +128,6 @@ window.showPerson = function(fullName) {
         <div class="greeting-text">${escapeHtml(greeting)}</div>
       </div>
     </div>
-    <section id="allMonths" class="months-container hidden"></section>
   `;
 };
 
@@ -195,11 +172,6 @@ function formatDate(date) {
   const months = ['января','февраля','марта','апреля','мая','июня',
                   'июля','августа','сентября','октября','ноября','декабря'];
   return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
-}
-
-function getMonthShort(monthNum) {
-  const months = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
-  return months[monthNum - 1];
 }
 
 function parseDate(str) {
