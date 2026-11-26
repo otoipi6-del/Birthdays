@@ -1,5 +1,5 @@
 // ====== НАСТРОЙКИ ======
-const GAS_URL = 'ВСТАВЬТЕ_URL_ВАШЕГО_GAS_ВЕБ_ПРИЛОЖЕНИЯ';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwdahigdXXE8kfyvRcyStG4nBb2WbP37ST94JxvRHjPMdkYUSditZ_bWFimsAkjFbJapg/exec';
 // =======================
 
 const tg = window.Telegram?.WebApp;
