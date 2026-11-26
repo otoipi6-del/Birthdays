@@ -36,6 +36,7 @@ body {
   display: flex;
   flex-direction: column;
   transition: background 0.3s, color 0.3s;
+  padding-bottom: 60px; /* Отступ для футера */
 }
 
 .app-header {
@@ -175,17 +176,21 @@ body {
 .person-row.past { opacity: var(--past-opacity); }
 
 /* Месяцы */
-.months-container { margin-top: 8px; }
+.months-container { margin-top: 0; } /* Убрали верхний отступ */
+
 .month-card {
   background: var(--card-bg); border-radius: 16px;
   margin-bottom: 16px; box-shadow: var(--shadow); overflow: hidden;
 }
+
+/* Заголовок месяца — теперь без sticky, чтобы не перекрывать футер */
 .month-header {
   padding: 14px 18px; font-weight: 700; font-size: 16px;
   background: var(--accent-light); color: var(--accent);
-  position: sticky; top: 57px; z-index: 10;
 }
+
 .month-body { padding: 8px 0; }
+
 .month-person {
   display: flex; justify-content: space-between;
   padding: 10px 18px; font-size: 14px;
@@ -195,12 +200,24 @@ body {
 .month-person:last-child { border-bottom: none; }
 .month-person.past { opacity: var(--past-opacity); }
 .month-person .day { font-weight: 600; min-width: 40px; color: var(--accent); }
+.month-person-name { font-weight: 500; }
+.month-person-date { color: var(--text-muted); font-size: 13px; }
+
+.empty-month {
+  color: var(--text-muted);
+  font-style: italic;
+  cursor: default;
+}
 
 /* Футер */
 .app-footer {
   background: var(--card-bg); border-top: 1px solid var(--border);
   padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
-  position: sticky; bottom: 0;
+  position: fixed; /* Фиксируем футер */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 200; /* Футер поверх всего */
 }
 .footer-nav { display: flex; justify-content: space-around; max-width: 640px; margin: 0 auto; }
 .nav-btn {
@@ -210,3 +227,30 @@ body {
 }
 .nav-btn.active { color: var(--accent); font-weight: 600; }
 .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Кнопка "Наверх" */
+#backToTopBtn {
+  position: fixed;
+  bottom: 80px; /* Над футером */
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  cursor: pointer;
+  z-index: 300;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+#backToTopBtn.show {
+  opacity: 1;
+  visibility: visible;
+}
