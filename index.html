@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Дни рождения</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <img src="icons/icon-192.png" alt="Логотип" class="header-logo">
+    <h1 class="header-title">Дни рождения</h1>
+    <button id="themeToggle" class="theme-toggle" aria-label="Переключить тему">
+      <span class="theme-icon">🌙</span>
+    </button>
+  </header>
+
+  <main id="app" class="app-main">
+    <div id="loading" class="loading">Загрузка...</div>
+    <div id="error" class="error hidden"></div>
+    <section id="todayCard" class="card-section"></section>
+    <section id="weekCard" class="card-section hidden"></section>
+    <section id="monthCard" class="card-section hidden"></section>
+    <section id="allMonths" class="months-container"></section>
+  </main>
+
+  <footer class="app-footer">
+    <nav class="footer-nav">
+      <button class="nav-btn active" data-tab="all">📅 Все</button>
+      <button class="nav-btn" data-tab="settings" disabled>⚙️ Настройки</button>
+    </nav>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
