@@ -48,23 +48,13 @@ function showLogin() {
     try {
       const resp = await fetch(GAS_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8' // Обход CORS и редиректов GAS
-        },
+        headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ action: 'login', authData: user })
       });
       
-      const text = await resp.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        alert('Ответ не JSON:\n' + text.substring(0, 500));
-        return;
-      }
-
+      const data = await resp.json();
       if (!data.ok) {
-        alert('Ответ сервера:\n' + JSON.stringify(data, null, 2));
+        alert('Сервер: ' + (data.error || 'Ошибка'));
         return;
       }
       currentUserId = data.userId;
@@ -84,9 +74,7 @@ async function loadBirthdays() {
   try {
     const resp = await fetch(GAS_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8'
-      },
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action: 'getBirthdays', userId: currentUserId })
     });
     const data = await resp.json();
