@@ -74,47 +74,51 @@ function renderMain() {
   if (todayPeople.length > 0) {
     const dateStr = formatDate(today);
     topHtml += `
-      <div class="today-card">
-        <div class="today-date">${dateStr}</div>
-        <div class="today-subtitle">Сегодня день рождения</div>
-        <div class="today-list">
-          ${todayPeople.map(p => `
-            <div class="today-person" onclick="showPerson('${escapeHtml(p.fullName)}')">
-              <span class="person-name">${formatShortName(p.fullName)}</span>
-              <span class="person-age">${today.getFullYear() - parseDate(p.birthDate).year} лет</span>
-            </div>
-          `).join('')}
+      <div class="card-block">
+        <div class="card-header-today">${dateStr} — Сегодня день рождения</div>
+        <div class="card-body">
+          ${todayPeople.map(p => {
+            const age = today.getFullYear() - parseDate(p.birthDate).year;
+            return `
+              <div class="row-item" onclick="showPerson('${escapeHtml(p.fullName)}')">
+                <span class="row-name">${escapeHtml(p.fullName)}</span>
+                <span class="row-date">${age} лет</span>
+              </div>
+            `;
+          }).join('')}
         </div>
       </div>
     `;
   }
 
-  // 2. Карточка "На этой неделе"
-  if (weekPeople.length > 0) {
-    topHtml += `
-      <div class="week-card">
-        <div class="section-title">На этой неделе</div>
-        ${weekPeople.map(p => {
-          const d = parseDate(p.birthDate);
-          const isPast = d.day < todayDay;
-          const dateLabel = `${d.day} ${getMonthShort(d.month)}`;
-          return `
-            <div class="week-person-row ${isPast ? 'past' : ''}" onclick="showPerson('${escapeHtml(p.fullName)}')">
-              <span class="week-person-name">${escapeHtml(p.fullName)}</span>
-              <span class="week-person-date">${dateLabel}</span>
-            </div>
-          `;
-        }).join('')}
-      </div>
-    `;
-  }
-
-  // 3. Кнопка "Добавить именинника"
+  // 2. Кнопка "Добавить" (сразу под карточкой "Сегодня" или просто сверху)
   topHtml += `
     <div style="margin-bottom: 20px; text-align: center;">
       <button onclick="openAddForm()" class="add-btn">+ Добавить именинника</button>
     </div>
   `;
+
+  // 3. Карточка "На этой неделе"
+  if (weekPeople.length > 0) {
+    topHtml += `
+      <div class="card-block">
+        <div class="card-header">На этой неделе</div>
+        <div class="card-body">
+          ${weekPeople.map(p => {
+            const d = parseDate(p.birthDate);
+            const isPast = d.day < todayDay;
+            const dateLabel = `${d.day} ${getMonthShort(d.month)}`;
+            return `
+              <div class="row-item ${isPast ? 'past' : ''}" onclick="showPerson('${escapeHtml(p.fullName)}')">
+                <span class="row-name">${escapeHtml(p.fullName)}</span>
+                <span class="row-date">${dateLabel}</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
 
   app.innerHTML = `
     ${topHtml}
@@ -125,9 +129,6 @@ function renderMain() {
 
 // ====== ФОРМА ДОБАВЛЕНИЯ ======
 window.openAddForm = function() {
-  const app = document.getElementById('app');
-  
-  // Создаём модальное окно
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
   modal.id = 'addModal';
@@ -158,11 +159,37 @@ window.openAddForm = function() {
           <label>Telegram (username)</label>
           <input type="text" id="addTelegram" placeholder="@username">
         </div>
+        <div class="form-group">
+          <label>ID Telegram (без @)</label>
+          <input type="text" id="addTelegramId" placeholder="123456789">
+        </div>
+        <div class="form-group">
+          <label>Группа</label>
+          <select id="addGroupSelect" onchange="toggleCustomGroup()">
+            <option value="">— не указана —</option>
+            <option value="Родственники">Родственники</option>
+            <option value="Друзья">Друзья</option>
+            <option value="Коллеги">Коллеги</option>
+            <option value="Другое">Другое (ввести своё)</option>
+          </select>
+          <input type="text" id="addGroupCustom" placeholder="Своя группа" style="margin-top: 8px; display: none;">
+        </div>
         <button type="submit" class="submit-btn" id="addSubmitBtn">Сохранить</button>
       </form>
     </div>
   `;
   document.body.appendChild(modal);
+};
+
+window.toggleCustomGroup = function() {
+  const select = document.getElementById('addGroupSelect');
+  const customInput = document.getElementById('addGroupCustom');
+  if (select.value === 'Другое') {
+    customInput.style.display = 'block';
+  } else {
+    customInput.style.display = 'none';
+    customInput.value = '';
+  }
 };
 
 window.closeAddForm = function() {
@@ -177,12 +204,18 @@ window.submitAddForm = async function(event) {
   btn.disabled = true;
   btn.textContent = 'Сохранение...';
 
+  const groupSelect = document.getElementById('addGroupSelect').value;
+  const groupCustom = document.getElementById('addGroupCustom').value.trim();
+  const finalGroup = groupSelect === 'Другое' ? groupCustom : groupSelect;
+
   const data = {
     surname: document.getElementById('addSurname').value.trim(),
     name: document.getElementById('addName').value.trim(),
     patronymic: document.getElementById('addPatronymic').value.trim(),
     birthDate: document.getElementById('addBirthDate').value,
-    telegram: document.getElementById('addTelegram').value.trim()
+    telegram: document.getElementById('addTelegram').value.trim(),
+    telegramId: document.getElementById('addTelegramId').value.trim(),
+    group: finalGroup
   };
 
   try {
@@ -201,7 +234,7 @@ window.submitAddForm = async function(event) {
     }
 
     closeAddForm();
-    loadBirthdays(); // Перезагружаем список
+    loadBirthdays();
   } catch (e) {
     alert('Ошибка соединения: ' + e.message);
     btn.disabled = false;
@@ -219,8 +252,14 @@ window.showPerson = function(fullName) {
   const birthYear = parseDate(person.birthDate).year;
   const age = today.getFullYear() - birthYear;
   const greeting = generateGreeting(person);
-  const tgUser = person.telegramUsername ? person.telegramUsername.replace('@', '') : '';
-  const tgLink = tgUser ? `https://t.me/${tgUser}` : '#';
+  
+  // Для перехода в чат используем ID, если есть, иначе username
+  let tgLink = '#';
+  if (person.telegramId) {
+    tgLink = `tg://user?id=${person.telegramId}`;
+  } else if (person.telegramUsername) {
+    tgLink = `https://t.me/${person.telegramUsername.replace('@', '')}`;
+  }
 
   app.innerHTML = `
     <div style="padding: 10px 0;">
@@ -230,6 +269,7 @@ window.showPerson = function(fullName) {
       <div class="name">${escapeHtml(person.fullName)}</div>
       <div class="age">${age} <span class="age-label">лет</span></div>
       <div class="birth-date">Дата рождения: ${formatDate(new Date(person.birthDate))}</div>
+      ${person.group ? `<div class="birth-date">Группа: ${escapeHtml(person.group)}</div>` : ''}
       
       <a href="${tgLink}" target="_blank" class="greet-btn">
         ✈️ Написать в Telegram
@@ -267,16 +307,16 @@ function renderAllMonths() {
     
     let rows = '';
     if (people.length === 0) {
-      rows = `<div class="month-person empty-month">Нет именинников</div>`;
+      rows = `<div class="row-item empty-row">Нет именинников</div>`;
     } else {
       rows = people.map(p => {
         const d = parseDate(p.birthDate);
         const isPast = m < curMonth || (m === curMonth && d.day < curDay);
         const dateLabel = `${d.day} ${getMonthShort(m)}`;
         return `
-          <div class="month-person ${isPast ? 'past' : ''}" onclick="showPerson('${escapeHtml(p.fullName)}')">
-            <span class="month-person-name">${escapeHtml(p.fullName)}</span>
-            <span class="month-person-date">${dateLabel}</span>
+          <div class="row-item ${isPast ? 'past' : ''}" onclick="showPerson('${escapeHtml(p.fullName)}')">
+            <span class="row-name">${escapeHtml(p.fullName)}</span>
+            <span class="row-date">${dateLabel}</span>
           </div>
         `;
       }).join('');
