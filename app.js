@@ -70,14 +70,14 @@ function renderMain() {
 
   let topHtml = '';
 
-  // 1. Карточка "Сегодня" (используем card-block / card-header / card-body)
+  // 1. Карточка "Сегодня"
   if (todayPeople.length > 0) {
     const dateStr = formatDate(today);
     topHtml += `
       <div class="card-block">
-        <div class="card-header" style="display: flex; flex-direction: column;">
-          <div style="font-size: 14px; font-weight: 600;">${dateStr}</div>
-          <div style="font-size: 16px; font-weight: 700; color: var(--text);">Сегодня день рождения</div>
+        <div class="card-header">
+          ${dateStr}
+          <div style="font-size: 14px; font-weight: 400; color: var(--text); margin-top: 2px;">Сегодня день рождения</div>
         </div>
         <div class="card-body">
           ${todayPeople.map(p => {
