@@ -84,8 +84,14 @@ body {
   font-size: 18px;
   font-weight: 700;
   color: var(--accent);
-  margin-bottom: 16px;
   text-transform: capitalize;
+  margin-bottom: 4px;
+}
+
+.today-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
 }
 
 .today-list {
@@ -107,13 +113,11 @@ body {
 [data-theme="dark"] .today-person { background: rgba(0,0,0,0.2); }
 .today-person:active { background: rgba(255,255,255,0.9); }
 
-.today-person .person-name { font-weight: 600; font-size: 16px; }
-.today-person .person-age { font-size: 14px; color: var(--accent); font-weight: 600; }
+.today-person .person-name { font-weight: 600; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.today-person .person-age { font-size: 14px; color: var(--accent); font-weight: 600; white-space: nowrap; margin-left: 10px; }
 
 /* Карточка подробностей */
-.person-detail-card {
-  text-align: center;
-}
+.person-detail-card { text-align: center; }
 .person-detail-card .name { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
 .person-detail-card .age { font-size: 36px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
 .person-detail-card .age-label { font-size: 16px; font-weight: 400; color: var(--text-muted); }
@@ -151,8 +155,8 @@ body {
 .greeting-title { font-weight: 600; margin-bottom: 8px; font-size: 14px; color: var(--accent); }
 .greeting-text { font-size: 15px; line-height: 1.5; }
 
-/* Карточка недели / месяца */
-.week-card, .month-card-top {
+/* Карточка "На этой неделе" */
+.week-card {
   background: var(--card-bg);
   border-radius: 20px;
   padding: 20px;
@@ -167,30 +171,33 @@ body {
   letter-spacing: 0.5px; margin-bottom: 12px;
 }
 
-.person-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 12px 0; border-bottom: 1px solid var(--border);
+/* Строка именинника на неделе */
+.week-person-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
+  font-size: 14px; /* Уменьшили шрифт */
 }
-.person-row:last-child { border-bottom: none; }
-.person-row.past { opacity: var(--past-opacity); }
+.week-person-row:last-child { border-bottom: none; }
+.week-person-row.past { opacity: var(--past-opacity); }
+
+.week-person-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.week-person-date { color: var(--text-muted); font-size: 13px; white-space: nowrap; margin-left: 10px; }
 
 /* Месяцы */
-.months-container { margin-top: 0; } /* Убрали верхний отступ */
-
+.months-container { margin-top: 0; }
 .month-card {
   background: var(--card-bg); border-radius: 16px;
   margin-bottom: 16px; box-shadow: var(--shadow); overflow: hidden;
 }
-
-/* Заголовок месяца — теперь без sticky, чтобы не перекрывать футер */
 .month-header {
   padding: 14px 18px; font-weight: 700; font-size: 16px;
   background: var(--accent-light); color: var(--accent);
 }
-
 .month-body { padding: 8px 0; }
-
 .month-person {
   display: flex; justify-content: space-between;
   padding: 10px 18px; font-size: 14px;
@@ -199,9 +206,8 @@ body {
 }
 .month-person:last-child { border-bottom: none; }
 .month-person.past { opacity: var(--past-opacity); }
-.month-person .day { font-weight: 600; min-width: 40px; color: var(--accent); }
-.month-person-name { font-weight: 500; }
-.month-person-date { color: var(--text-muted); font-size: 13px; }
+.month-person-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.month-person-date { color: var(--text-muted); font-size: 13px; white-space: nowrap; margin-left: 10px; }
 
 .empty-month {
   color: var(--text-muted);
@@ -213,11 +219,11 @@ body {
 .app-footer {
   background: var(--card-bg); border-top: 1px solid var(--border);
   padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
-  position: fixed; /* Фиксируем футер */
+  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 200; /* Футер поверх всего */
+  z-index: 200;
 }
 .footer-nav { display: flex; justify-content: space-around; max-width: 640px; margin: 0 auto; }
 .nav-btn {
@@ -231,7 +237,7 @@ body {
 /* Кнопка "Наверх" */
 #backToTopBtn {
   position: fixed;
-  bottom: 80px; /* Над футером */
+  bottom: 80px;
   right: 20px;
   width: 48px;
   height: 48px;
