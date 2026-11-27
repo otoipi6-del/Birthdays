@@ -70,51 +70,61 @@ body {
 .error { color: #d32f2f; }
 .hidden { display: none !important; }
 
-/* Главная карточка "Сегодня" */
-.today-card {
-  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-  border-radius: 20px;
-  padding: 20px;
+/* ===== ЕДИНЫЙ ФОРМАТ КАРТОЧЕК ===== */
+.card-block {
+  background: var(--card-bg);
+  border-radius: 16px;
   margin-bottom: 20px;
   box-shadow: var(--shadow);
-  border: 1px solid var(--border);
+  overflow: hidden;
 }
 
-.today-date {
-  font-size: 18px;
+/* Заголовки карточек (выделены цветом) */
+.card-header-today,
+.card-header {
+  padding: 14px 18px;
   font-weight: 700;
+  font-size: 16px;
+  background: var(--accent-light);
   color: var(--accent);
-  text-transform: capitalize;
-  margin-bottom: 4px;
 }
 
-.today-subtitle {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-bottom: 16px;
+.card-body {
+  padding: 8px 0;
 }
 
-.today-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.today-person {
+/* Строка с именинником */
+.row-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(255,255,255,0.6);
-  padding: 12px 16px;
-  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
-  transition: background 0.2s;
 }
-[data-theme="dark"] .today-person { background: rgba(0,0,0,0.2); }
-.today-person:active { background: rgba(255,255,255,0.9); }
+.row-item:last-child { border-bottom: none; }
+.row-item.past { opacity: var(--past-opacity); }
+.row-item.empty-row {
+  color: var(--text-muted);
+  font-style: italic;
+  cursor: default;
+  justify-content: center;
+}
 
-.today-person .person-name { font-weight: 600; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.today-person .person-age { font-size: 14px; color: var(--accent); font-weight: 600; white-space: nowrap; margin-left: 10px; }
+.row-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-date {
+  color: var(--text-muted);
+  font-size: 13px;
+  white-space: nowrap;
+  margin-left: 10px;
+}
 
 /* Карточка подробностей */
 .person-detail-card { text-align: center; }
@@ -155,37 +165,6 @@ body {
 .greeting-title { font-weight: 600; margin-bottom: 8px; font-size: 14px; color: var(--accent); }
 .greeting-text { font-size: 15px; line-height: 1.5; }
 
-/* Карточка "На этой неделе" */
-.week-card {
-  background: var(--card-bg);
-  border-radius: 20px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-}
-
-.section-title {
-  font-size: 14px; font-weight: 600;
-  color: var(--text-muted); text-transform: uppercase;
-  letter-spacing: 0.5px; margin-bottom: 12px;
-}
-
-.week-person-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-  font-size: 14px;
-}
-.week-person-row:last-child { border-bottom: none; }
-.week-person-row.past { opacity: var(--past-opacity); }
-
-.week-person-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.week-person-date { color: var(--text-muted); font-size: 13px; white-space: nowrap; margin-left: 10px; }
-
 /* Месяцы */
 .months-container { margin-top: 0; }
 .month-card {
@@ -197,22 +176,6 @@ body {
   background: var(--accent-light); color: var(--accent);
 }
 .month-body { padding: 8px 0; }
-.month-person {
-  display: flex; justify-content: space-between;
-  padding: 10px 18px; font-size: 14px;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-}
-.month-person:last-child { border-bottom: none; }
-.month-person.past { opacity: var(--past-opacity); }
-.month-person-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.month-person-date { color: var(--text-muted); font-size: 13px; white-space: nowrap; margin-left: 10px; }
-
-.empty-month {
-  color: var(--text-muted);
-  font-style: italic;
-  cursor: default;
-}
 
 /* Кнопка "Добавить" */
 .add-btn {
@@ -248,6 +211,8 @@ body {
   width: 100%;
   max-width: 400px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .modal-header {
@@ -284,7 +249,8 @@ body {
   margin-bottom: 6px;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
   width: 100%;
   padding: 12px;
   border: 1px solid var(--border);
@@ -295,7 +261,8 @@ body {
   outline: none;
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
   border-color: var(--accent);
 }
 
