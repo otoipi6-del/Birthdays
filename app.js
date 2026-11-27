@@ -1,15 +1,16 @@
 // ====== НАСТРОЙКИ ======
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwdahigdXXE8kfyvRcyStG4nBb2WbP37ST94JxvRHjPMdkYUSditZ_bWFimsAkjFbJapg/exec';
-const TEST_USER_ID = '6645520930';
+const BOT_USERNAME = 'QwikPassBot';
+const TEST_USER_ID = '6645520930'; // Для тестов, пока не подключен бот
 // =======================
 
 let allPeople = [];
-let currentUserId = TEST_USER_ID;
+let currentUserId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initBackToTop();
-  loadBirthdays();
+  checkAuth();
 });
 
 // ====== КНОПКА "НАВЕРХ" ======
@@ -32,6 +33,68 @@ function initBackToTop() {
     }
   });
 }
+
+// ====== АВТОРИЗАЦИЯ ======
+function checkAuth() {
+  const savedId = localStorage.getItem('tg_user_id');
+  if (savedId) {
+    currentUserId = savedId;
+    loadBirthdays();
+  } else {
+    showLogin();
+  }
+}
+
+function showLogin() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="login-container">
+      <div class="login-title">Дни рождения</div>
+      <div class="login-subtitle">Войдите через Telegram, чтобы продолжить</div>
+      <div id="telegram-widget"></div>
+      <div style="margin-top: 20px; font-size: 12px; color: var(--text-muted); text-align: center;">
+        Для теста можно нажать <a href="#" onclick="forceLogin(); return false;">сюда</a>
+      </div>
+    </div>
+  `;
+  document.getElementById('loading')?.classList.add('hidden');
+
+  const script = document.createElement('script');
+  script.src = 'https://telegram.org/js/telegram-widget.js?22';
+  script.setAttribute('data-telegram-login', BOT_USERNAME);
+  script.setAttribute('data-size', 'large');
+  script.setAttribute('data-radius', '12');
+  script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+  script.setAttribute('data-request-access', 'write');
+  document.getElementById('telegram-widget').appendChild(script);
+
+  window.onTelegramAuth = async function(user) {
+    try {
+      const resp = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'login', authData: user })
+      });
+      const data = await resp.json();
+      if (!data.ok) {
+        alert('Сервер: ' + (data.error || 'Ошибка'));
+        return;
+      }
+      currentUserId = data.userId;
+      localStorage.setItem('tg_user_id', data.userId);
+      loadBirthdays();
+    } catch (e) {
+      alert('Ошибка соединения: ' + e.message);
+    }
+  };
+}
+
+// Тестовый вход
+window.forceLogin = function() {
+  currentUserId = TEST_USER_ID;
+  localStorage.setItem('tg_user_id', TEST_USER_ID);
+  loadBirthdays();
+};
 
 // ====== ЗАГРУЗКА ДАННЫХ ======
 async function loadBirthdays() {
