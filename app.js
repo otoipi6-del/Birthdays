@@ -96,7 +96,7 @@ function renderMain() {
         <div class="section-title">На этой неделе</div>
         ${weekPeople.map(p => {
           const d = parseDate(p.birthDate);
-          const isPast = d.day < todayDay; // Прошел ли день рождения на этой неделе
+          const isPast = d.day < todayDay;
           const dateLabel = `${d.day} ${getMonthShort(d.month)}`;
           return `
             <div class="week-person-row ${isPast ? 'past' : ''}" onclick="showPerson('${escapeHtml(p.fullName)}')">
@@ -109,12 +109,105 @@ function renderMain() {
     `;
   }
 
+  // 3. Кнопка "Добавить именинника"
+  topHtml += `
+    <div style="margin-bottom: 20px; text-align: center;">
+      <button onclick="openAddForm()" class="add-btn">+ Добавить именинника</button>
+    </div>
+  `;
+
   app.innerHTML = `
     ${topHtml}
     <section id="allMonths" class="months-container"></section>
   `;
   renderAllMonths();
 }
+
+// ====== ФОРМА ДОБАВЛЕНИЯ ======
+window.openAddForm = function() {
+  const app = document.getElementById('app');
+  
+  // Создаём модальное окно
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.id = 'addModal';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Добавить именинника</h2>
+        <button onclick="closeAddForm()" class="close-btn">&times;</button>
+      </div>
+      <form id="addForm" onsubmit="submitAddForm(event)">
+        <div class="form-group">
+          <label>Фамилия *</label>
+          <input type="text" id="addSurname" required>
+        </div>
+        <div class="form-group">
+          <label>Имя *</label>
+          <input type="text" id="addName" required>
+        </div>
+        <div class="form-group">
+          <label>Отчество</label>
+          <input type="text" id="addPatronymic">
+        </div>
+        <div class="form-group">
+          <label>Дата рождения *</label>
+          <input type="date" id="addBirthDate" required>
+        </div>
+        <div class="form-group">
+          <label>Telegram (username)</label>
+          <input type="text" id="addTelegram" placeholder="@username">
+        </div>
+        <button type="submit" class="submit-btn" id="addSubmitBtn">Сохранить</button>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(modal);
+};
+
+window.closeAddForm = function() {
+  const modal = document.getElementById('addModal');
+  if (modal) modal.remove();
+};
+
+window.submitAddForm = async function(event) {
+  event.preventDefault();
+  
+  const btn = document.getElementById('addSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Сохранение...';
+
+  const data = {
+    surname: document.getElementById('addSurname').value.trim(),
+    name: document.getElementById('addName').value.trim(),
+    patronymic: document.getElementById('addPatronymic').value.trim(),
+    birthDate: document.getElementById('addBirthDate').value,
+    telegram: document.getElementById('addTelegram').value.trim()
+  };
+
+  try {
+    const resp = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'addBirthday', userId: currentUserId, data })
+    });
+    const result = await resp.json();
+    
+    if (!result.ok) {
+      alert('Ошибка: ' + (result.error || 'Не удалось сохранить'));
+      btn.disabled = false;
+      btn.textContent = 'Сохранить';
+      return;
+    }
+
+    closeAddForm();
+    loadBirthdays(); // Перезагружаем список
+  } catch (e) {
+    alert('Ошибка соединения: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = 'Сохранить';
+  }
+};
 
 // ====== ПОДРОБНАЯ КАРТОЧКА ======
 window.showPerson = function(fullName) {
@@ -199,7 +292,6 @@ function renderAllMonths() {
 }
 
 // ====== УТИЛИТЫ ======
-// Форматирование: Фамилия И.О.
 function formatShortName(fullName) {
   const parts = fullName.trim().split(/\s+/);
   if (parts.length === 1) return parts[0];
@@ -254,7 +346,7 @@ function getThisWeekPeople(today) {
   }).sort((a, b) => {
     const da = parseDate(a.birthDate);
     const db = parseDate(b.birthDate);
-    return da.day - db.day; // Сортируем по дням недели
+    return da.day - db.day;
   });
 }
 
