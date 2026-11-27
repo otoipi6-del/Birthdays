@@ -1,7 +1,6 @@
 // ====== НАСТРОЙКИ ======
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwdahigdXXE8kfyvRcyStG4nBb2WbP37ST94JxvRHjPMdkYUSditZ_bWFimsAkjFbJapg/exec';
 const BOT_USERNAME = 'QwikPassBot';
-const TEST_USER_ID = '6645520930'; // Для тестов, пока не подключен бот
 // =======================
 
 let allPeople = [];
@@ -89,10 +88,9 @@ function showLogin() {
   };
 }
 
-// Тестовый вход
 window.forceLogin = function() {
-  currentUserId = TEST_USER_ID;
-  localStorage.setItem('tg_user_id', TEST_USER_ID);
+  currentUserId = '6645520930';
+  localStorage.setItem('tg_user_id', currentUserId);
   loadBirthdays();
 };
 
