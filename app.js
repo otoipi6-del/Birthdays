@@ -8,7 +8,7 @@ let currentUserId = TEST_USER_ID;
 
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
-  initBackToTop(); // Добавляем кнопку "Наверх"
+  initBackToTop();
   loadBirthdays();
 });
 
@@ -70,15 +70,17 @@ function renderMain() {
 
   let topHtml = '';
 
+  // 1. Карточка "Сегодня"
   if (todayPeople.length > 0) {
     const dateStr = formatDate(today);
     topHtml += `
       <div class="today-card">
         <div class="today-date">${dateStr}</div>
+        <div class="today-subtitle">Сегодня день рождения</div>
         <div class="today-list">
           ${todayPeople.map(p => `
             <div class="today-person" onclick="showPerson('${escapeHtml(p.fullName)}')">
-              <span class="person-name">${escapeHtml(p.fullName)}</span>
+              <span class="person-name">${formatShortName(p.fullName)}</span>
               <span class="person-age">${today.getFullYear() - parseDate(p.birthDate).year} лет</span>
             </div>
           `).join('')}
@@ -87,17 +89,19 @@ function renderMain() {
     `;
   }
 
+  // 2. Карточка "На этой неделе"
   if (weekPeople.length > 0) {
     topHtml += `
       <div class="week-card">
         <div class="section-title">На этой неделе</div>
         ${weekPeople.map(p => {
           const d = parseDate(p.birthDate);
-          const monthNames = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+          const isPast = d.day < todayDay; // Прошел ли день рождения на этой неделе
+          const dateLabel = `${d.day} ${getMonthShort(d.month)}`;
           return `
-            <div class="person-row" onclick="showPerson('${escapeHtml(p.fullName)}')">
-              <span class="person-name">${escapeHtml(p.fullName)}</span>
-              <span class="person-date">${d.day} ${monthNames[d.month-1]}</span>
+            <div class="week-person-row ${isPast ? 'past' : ''}" onclick="showPerson('${escapeHtml(p.fullName)}')">
+              <span class="week-person-name">${escapeHtml(p.fullName)}</span>
+              <span class="week-person-date">${dateLabel}</span>
             </div>
           `;
         }).join('')}
@@ -195,6 +199,15 @@ function renderAllMonths() {
 }
 
 // ====== УТИЛИТЫ ======
+// Форматирование: Фамилия И.О.
+function formatShortName(fullName) {
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  const surname = parts[0];
+  const initials = parts.slice(1).map(p => p[0] + '.').join('');
+  return `${surname} ${initials}`;
+}
+
 function formatDate(date) {
   const months = ['января','февраля','марта','апреля','мая','июня',
                   'июля','августа','сентября','октября','ноября','декабря'];
@@ -227,14 +240,21 @@ function getThisWeekPeople(today) {
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
   const monday = new Date(today);
   monday.setDate(today.getDate() + mondayOffset);
+  monday.setHours(0, 0, 0, 0);
+  
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
 
   return allPeople.filter(p => {
     const d = parseDate(p.birthDate);
     const thisYear = today.getFullYear();
     let bd = new Date(thisYear, d.month - 1, d.day);
     return bd >= monday && bd <= sunday;
+  }).sort((a, b) => {
+    const da = parseDate(a.birthDate);
+    const db = parseDate(b.birthDate);
+    return da.day - db.day; // Сортируем по дням недели
   });
 }
 
