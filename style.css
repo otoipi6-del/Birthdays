@@ -79,14 +79,34 @@ body {
   overflow: hidden;
 }
 
-/* Заголовки карточек (выделены цветом) */
-.card-header-today,
+/* Заголовки карточек */
 .card-header {
   padding: 14px 18px;
   font-weight: 700;
   font-size: 16px;
   background: var(--accent-light);
   color: var(--accent);
+}
+
+/* Специальный заголовок для "Сегодня" */
+.card-header-today {
+  padding: 14px 18px;
+  background: var(--accent-light);
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header-today .today-date-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 2px;
+}
+
+.card-header-today .today-subtitle-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .card-body {
@@ -126,8 +146,16 @@ body {
   margin-left: 10px;
 }
 
-/* Карточка подробностей */
-.person-detail-card { text-align: center; }
+/* Карточка подробностей (открывается при клике) */
+.person-detail-card {
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  text-align: center;
+}
 .person-detail-card .name { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
 .person-detail-card .age { font-size: 36px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
 .person-detail-card .age-label { font-size: 16px; font-weight: 400; color: var(--text-muted); }
